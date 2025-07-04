@@ -1,0 +1,92 @@
+## Primary File  : docker-compose.yml
+## Override File : docker-compose.override.yml (automatically included if present)
+## docker compose config
+## docker compose up --build
+## https://docs.localstack.cloud/getting-started/installation/#docker-compose
+## Specifies the Docker Compose file version
+version: '3'
+
+## Defines networks that can be used by services in the Docker Compose file
+networks:
+  ## Declares a network named "back_tier"
+  back_tier:
+    # driver: bridge
+  front_tier:
+  jupyter_network:
+  r_network:
+
+
+## https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#image-relationships
+## https://github.com/jupyter/docker-stacks/blob/main/images/base-notebook/Dockerfile#L58
+## Use the official Jupyter Docker Stacks
+## "jupyter/base-notebook:latest"
+## "jupyter/minimal-notebook:latest"
+## "jupyter/scipy-notebook:latest"
+## "jupyter/r-notebook:latest"
+## "jupyter/tensorflow-notebook:latest"
+## "jupyter/pytorch-notebook:latest"
+## "jupyter/pyspark-notebook:latest"
+## Declares services (containers) that will be run by Docker Compose
+services:
+  ## docker compose up --build base_notebook
+  base_notebook:
+    container_name: "base_notebook_main"
+    stdin_open: true # used for interactive debugging
+    tty: true # used for interactive debugging
+    restart: "always"
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: "${BASE_IMAGE:-jupyter/base-notebook:latest}"
+    ## Adjust the working directory as needed
+    working_dir: "/home/jovyan/work"
+    environment:
+      ## Optionally override JUPYTER_PORT if needed
+      JUPYTER_PORT: 8888
+      # JUPYTER_ENABLE_LAB: yes
+      USER_CODE_PATH: "/home/jovyan/work/${PROJECT_NAME}"  # mageai
+      PROJECT_NAME: "mlops"  # mageai
+    ## Change default port to 8889 if needed
+    # command: start-notebook.py --port ${JUPYTER_PORT}
+    ports:
+      ## Map host port 8888 to container port 8888 (default)
+      - "8888:8888"
+      - "5001:5001"
+      - "9000:9000"
+    volumes:
+      - ".:/home/jovyan/work"
+    networks:
+      - "back_tier"
+      - "front_tier"
+      - "jupyter_network"
+
+  ## docker-compose up --build r_notebook
+  r_notebook:
+    container_name: "r_notebook_main"
+    stdin_open: true # used for interactive debugging
+    tty: true # used for interactive debugging
+    restart: "always"
+    build:
+      context: .
+      dockerfile: jupyter.Dockerfile
+      args:
+        BASE_IMAGE: "${BASE_IMAGE:-jupyter/r-notebook:latest}"
+    ## Adjust the working directory as needed
+    working_dir: "/home/jovyan/work"
+    environment:
+      ## Optionally override JUPYTER_PORT if needed
+      JUPYTER_PORT: 8889
+      # JUPYTER_ENABLE_LAB: yes
+    ## Change default port to 8889 if needed
+    # command: start-notebook.py --port ${JUPYTER_PORT}
+    ports:
+      ## Map host port 8889 to container port 8889 (default)
+      - "8889:8889"
+      - "9001:9001"
+    volumes:
+      - ".:/home/jovyan/work"
+    networks:
+      - "back_tier"
+      - "front_tier"
+      - "r_network"
