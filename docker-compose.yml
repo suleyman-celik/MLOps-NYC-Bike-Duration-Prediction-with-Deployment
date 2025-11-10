@@ -13,7 +13,6 @@ networks:
     # driver: bridge
   front_tier:
   jupyter_network:
-  r_network:
 
 
 ## https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#image-relationships
@@ -60,33 +59,3 @@ services:
       - "back_tier"
       - "front_tier"
       - "jupyter_network"
-
-  ## docker-compose up --build r_notebook
-  r_notebook:
-    container_name: "r_notebook_main"
-    stdin_open: true # used for interactive debugging
-    tty: true # used for interactive debugging
-    restart: "always"
-    build:
-      context: .
-      dockerfile: jupyter.Dockerfile
-      args:
-        BASE_IMAGE: "${BASE_IMAGE:-jupyter/r-notebook:latest}"
-    ## Adjust the working directory as needed
-    working_dir: "/home/jovyan/work"
-    environment:
-      ## Optionally override JUPYTER_PORT if needed
-      JUPYTER_PORT: 8889
-      # JUPYTER_ENABLE_LAB: yes
-    ## Change default port to 8889 if needed
-    # command: start-notebook.py --port ${JUPYTER_PORT}
-    ports:
-      ## Map host port 8889 to container port 8889 (default)
-      - "8889:8889"
-      - "9001:9001"
-    volumes:
-      - ".:/home/jovyan/work"
-    networks:
-      - "back_tier"
-      - "front_tier"
-      - "r_network"
